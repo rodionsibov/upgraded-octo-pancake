@@ -1,0 +1,44 @@
+---
+import Button from "@/components/starwind/button";
+import "@/styles/starwind.css";
+
+type Props = {
+  title: string;
+  description?: string;
+};
+
+const { title = "default title", description = "default description" } =
+  Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="flex flex-col h-screen">
+      <header class="border-b border-gray-400">
+        <nav class="p-4 flex justify-center">
+          <ul class="flex gap-4">
+            <Button class="rounded-none" href="/">Home</Button>
+            <Button class="rounded-none" variant="secondary" href="/blog/page/1"
+              >Blog en</Button
+            >
+            <Button class="rounded-none" variant="success" href="/blog/es"
+              >Blog es</Button
+            >
+          </ul>
+        </nav>
+      </header>
+      <main class="flex-1">
+        <slot />
+      </main>
+      <footer></footer>
+    </div>
+  </body>
+</html>

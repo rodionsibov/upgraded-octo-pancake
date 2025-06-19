@@ -1,0 +1,15 @@
+---
+import { Image } from "astro:assets";
+
+const { aboutText, aboutPhotoUrl } = Astro.props;
+---
+
+<div class="h-screen bg-blue-100 flex flex-col items-center justify-center">
+  <h1 class="text-3xl mb-8">{aboutText}</h1>
+  <Image
+    src={`${import.meta.env.STRAPI_URL}${aboutPhotoUrl}`}
+    alt=""
+    width="400"
+    height="400"
+  />
+</div>

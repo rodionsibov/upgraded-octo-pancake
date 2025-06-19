@@ -1,0 +1,44 @@
+---
+import { Image } from "astro:assets";
+import type Article from "../../interfaces/article";
+import fetchApi from "../../lib/strapi";
+import { marked } from "marked";
+import Layout from "@/layouts/Layout.astro";
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+let article: Article;
+
+try {
+  article = await fetchApi<Article>({
+    endpoint: "blogs",
+    wrappedByKey: "data",
+    wrappedByList: true,
+    query: {
+      "filters[slug][$eq]": slug || "",
+      populate: "*",
+    },
+  });
+} catch (error) {
+  return Astro.redirect("/404");
+}
+---
+
+<Layout title="">
+  {article &&(
+ <div class="p-4">
+    <Image
+      height="200"
+      width="300"
+      class="mb-4"
+      alt=""
+      src={`${import.meta.env.STRAPI_URL}${article?.image?.url}`}
+    />
+
+    <h1>{article?.title}</h1>
+    <article set:html={marked.parse(article?.content)} />
+  </div>
+  )}
+ 
+</Layout>

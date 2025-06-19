@@ -1,0 +1,138 @@
+---
+import fetchApi from "../lib/strapi";
+import Layout from "../layouts/Layout.astro";
+import type Article from "@/interfaces/article";
+import Hero from "@/components/Hero.astro";
+import About from "@/components/About.astro";
+import { Label } from "@/components/starwind/label";
+import { Input } from "@/components/starwind/input";
+import Button from "@/components/starwind/button";
+
+const articles = await fetchApi<Article[]>({
+  endpoint: "blogs", // the content type to fetch
+  wrappedByKey: "data", // the key to unwrap the response
+});
+
+const pageData = await fetchApi<any>({
+  endpoint: "pages",
+  wrappedByKey: "data",
+  query: {
+    "populate[LandingPage][populate]=": "*",
+  },
+});
+
+const heroData = pageData[0].LandingPage.find(
+  (pd: { __component: string }) => pd.__component === "hero.hero"
+);
+
+const { heroText, heroDescription } = heroData;
+
+const aboutData = pageData[0].LandingPage.find(
+  (pd: { __component: string }) => pd.__component === "about.about"
+);
+
+const {
+  aboutText,
+  aboutPhoto: { url: aboutPhotoUrl },
+} = aboutData;
+---
+
+<Layout title="Home page">
+  <div class="flex items-center justify-center h-screen bg-indigo-900">
+    <form id="email-form">
+      <Label class="text-sm text-white" for="email">Email</Label>
+      <Input
+        class="mt-1"
+        id="email"
+        name="email"
+        type="email"
+        placeholder="Enter your email"
+      />
+
+      <div class="mt-4">
+        <Button type={"submit"} variant="success">Send</Button>
+      </div>
+    </form>
+  </div>
+
+  <div class="mb-12">
+    <Hero {heroText} {heroDescription} />
+    <About {aboutText} {aboutPhotoUrl} />
+  </div>
+
+  <div class="px-4 py-20 w-full max-w-xl mx-auto mb-40">
+    <h1 class="text-3xl font-bold mb-8 text-center">Articles</h1>
+    <ul class="list-disc">
+      {
+        articles.map((article) => (
+          <li>
+            <a class="hover:underline" href={`/blog/${article.slug}/`}>
+              {article.title}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <script>
+    import { actions } from "astro:actions";
+    import { isInputError } from "astro:actions";
+
+    function clearPreviousMessage(id: string) {
+      const messageElement = document.getElementById(id);
+      if (messageElement) {
+        messageElement.remove();
+      }
+    }
+
+    function addMessageElement(
+      message: string,
+      type: "error" | "success",
+      element: HTMLElement
+    ) {
+      const p = document.createElement("p");
+
+      p.id = "message";
+      p.className = `mt-2 ${type === "success" ? "text-teal-300" : "text-pink-300"}`;
+      p.innerText = message;
+      element.appendChild(p);
+    }
+
+    function clearInput(id: string) {
+      const emailInput = document.getElementById(id) as HTMLInputElement;
+      if (emailInput) emailInput.value = "";
+    }
+
+    function renderMessage(error: any, data: any, form: HTMLFormElement) {
+      if (error && isInputError(error)) {
+        const message = error.fields.email && error.fields.email[0];
+        addMessageElement(message || "", "error", form);
+      } else {
+        if (data?.strapiErrors) {
+          const message = data?.strapiErrors.message;
+          addMessageElement(message, "error", form);
+        } else {
+          const message = "Form submitted, thank you.";
+          clearInput("email");
+          addMessageElement(message, "success", form);
+        }
+      }
+    }
+
+    const form = document.getElementById("email-form") as HTMLFormElement;
+
+    async function handleFormSubmit(e: Event) {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+
+      const { data, error } = await actions.email(formData);
+
+      clearPreviousMessage("message");
+      renderMessage(error, data, form);
+    }
+
+    form.addEventListener("submit", handleFormSubmit);
+  </script>
+</Layout>

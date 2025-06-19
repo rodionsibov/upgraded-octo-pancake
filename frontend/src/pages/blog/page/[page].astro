@@ -1,0 +1,57 @@
+---
+import Article from "@/interfaces/article";
+import Layout from "@/layouts/Layout.astro";
+import fetchApi from "@/lib/strapi";
+export const prerender = false;
+
+const { page } = Astro.params;
+const postsPerPage = "2";
+
+  const response = await fetchApi<any>({
+    endpoint: "blogs",
+    query: {
+      "pagination[page]": page,
+      "pagination[pageSize]": postsPerPage,
+      populate: "*",
+    },
+  });
+  
+  const articles = response.data as Article[];
+  const pagination = response.meta.pagination;
+---
+
+<Layout title="">
+  <div class="p-4">
+
+  
+      <h1 class="mb-8 text-3xl">Page {page}</h1>
+
+    <ul>
+      {
+        articles.map((article: Article) => (
+          <li>
+            <a href={`/blog/${article.slug}`}>
+              {article.title} , {new Date(article.updatedAt).toLocaleString()}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="text-center mt-8 text-sm">
+      {
+        pagination.page > 1 && (
+          <a href={`/blog/page/${pagination.page - 1}`}>Previous Page</a>
+        )
+      } |
+      {
+        pagination.page < pagination.pageCount && (
+          <a href={`/blog/page/${pagination.page + 1}`}>Next Page</a>
+        )
+      }
+    </div>
+  </div>
+
+    
+    
+</Layout>
